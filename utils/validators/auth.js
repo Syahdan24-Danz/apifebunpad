@@ -1,4 +1,4 @@
-import { body } from "express-validator";
+const { body } = require("express-validator");
 
 const validateLogin = [
   body("email")
@@ -14,4 +14,4 @@ const validateLogin = [
     .withMessage("Password must be at least 6 characters long"),
 ];
 
-export { validateLogin };
+module.exports = { validateLogin };

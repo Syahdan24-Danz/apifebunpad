@@ -1,12 +1,21 @@
-import db from "../connection.js"; // Pastikan db terhubung ke Prisma Client
+const db = require("../connection.js");
+const upload = require("../middlewares/path.js");
+const path = require("path");
 
 // READ: Mendapatkan semua data prestasi
 const getAllPrestasi = async (req, res) => {
   try {
-    const prestasi = await db.prestasi.findMany();
-    res
-      .status(200)
-      .json({ message: "Data prestasi ditemukan", data: prestasi });
+    db.query("SELECT * FROM prestasi", (err, results) => {
+      if (err) {
+        console.log(err);
+        return res
+          .status(500)
+          .json({ error: "Terjadi kesalahan saat mengambil data prestasi" });
+      }
+      res
+        .status(200)
+        .json({ message: "Data prestasi ditemukan", data: results });
+    });
   } catch (err) {
     console.log(err);
     res
@@ -16,48 +25,96 @@ const getAllPrestasi = async (req, res) => {
 };
 
 // CREATE: Menambahkan prestasi baru
-const createPrestasi = async (req, res) => {
-  const { nama, npm, namaKejuaraan, prodi, peringkat, imageKejuaraan } =
-    req.body;
+const createPrestasi = (req, res) => {
+  upload.single("imageKejuaraan")(req, res, (err) => {
+    if (err) {
+      console.error(err);
+      return res.status(400).json({ error: err.message });
+    }
 
-  const tanggalKejuaraan = req.body.tanggalKejuaraan
-    ? new Date(req.body.tanggalKejuaraan)
-    : new Date(); // Gunakan tanggal saat ini jika tidak diberikan
+    const { nama, npm, namaKejuaraan, prodi, peringkat, tanggalKejuaraan } =
+      req.body;
 
-  try {
-    const newPrestasi = await db.prestasi.create({
-      data: {
+    // Pastikan tanggalKejuaraan ada atau gunakan tanggal saat ini
+    const tanggalKejuaraanFinal = tanggalKejuaraan
+      ? new Date(tanggalKejuaraan)
+      : new Date();
+
+    // Pastikan file gambar ada sebelum menyimpannya di database
+    const imageKejuaraan = req.file ? `${req.file.filename}` : null;
+
+    // Validasi data
+    if (!nama || !npm || !namaKejuaraan || !prodi || !peringkat) {
+      return res
+        .status(400)
+        .json({ error: "Semua field kecuali gambar wajib diisi." });
+    }
+
+    try {
+      const query = `
+        INSERT INTO prestasi (nama, npm, namaKejuaraan, prodi, tanggalKejuaraan, peringkat, imageKejuaraan)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+      `;
+      const values = [
         nama,
         npm,
         namaKejuaraan,
         prodi,
-        tanggalKejuaraan: new Date(tanggalKejuaraan),
+        tanggalKejuaraanFinal,
         peringkat,
         imageKejuaraan,
-      },
-    });
-    res
-      .status(201)
-      .json({ message: "Prestasi berhasil ditambahkan", data: newPrestasi });
-  } catch (error) {
-    console.log(error);
-    res
-      .status(500)
-      .json({ error: "Terjadi kesalahan saat menambahkan prestasi" });
-  }
+      ];
+
+      db.query(query, values, (err, results) => {
+        if (err) {
+          console.error(err);
+          return res
+            .status(500)
+            .json({ error: "Terjadi kesalahan saat menambahkan prestasi." });
+        }
+        res.status(201).json({
+          message: "Prestasi berhasil ditambahkan.",
+          data: {
+            id: results.insertId,
+            nama,
+            npm,
+            namaKejuaraan,
+            prodi,
+            tanggalKejuaraan: tanggalKejuaraanFinal,
+            peringkat,
+            imageKejuaraan,
+          },
+        });
+      });
+    } catch (error) {
+      console.error(error);
+      res
+        .status(500)
+        .json({ error: "Terjadi kesalahan saat menambahkan prestasi." });
+    }
+  });
 };
 
 // READ: Mendapatkan satu prestasi berdasarkan ID
 const getPrestasiById = async (req, res) => {
   const { id } = req.params;
   try {
-    const prestasi = await db.prestasi.findUnique({
-      where: { id: parseInt(id, 10) },
-    });
-    if (!prestasi) {
-      return res.status(404).json({ error: "Prestasi tidak ditemukan" });
-    }
-    res.status(200).json(prestasi);
+    db.query(
+      "SELECT * FROM prestasi WHERE id = ?",
+      [parseInt(id, 10)],
+      (err, results) => {
+        if (err) {
+          console.log(err);
+          return res
+            .status(500)
+            .json({ error: "Terjadi kesalahan saat mengambil data prestasi" });
+        }
+        if (results.length === 0) {
+          return res.status(404).json({ error: "Prestasi tidak ditemukan" });
+        }
+        res.status(200).json(results[0]);
+      }
+    );
   } catch (error) {
     console.log(error);
     res
@@ -80,21 +137,36 @@ const updatePrestasi = async (req, res) => {
   } = req.body;
 
   try {
-    const updatedPrestasi = await db.prestasi.update({
-      where: { id: parseInt(id, 10) },
-      data: {
-        nama,
-        npm,
-        namaKejuaraan,
-        prodi,
-        tanggalKejuaraan: new Date(tanggalKejuaraan),
-        peringkat,
-        imageKejuaraan,
-      },
+    const query = `
+      UPDATE prestasi
+      SET nama = ?, npm = ?, namaKejuaraan = ?, prodi = ?, tanggalKejuaraan = ?, peringkat = ?, imageKejuaraan = ?
+      WHERE id = ?
+    `;
+    const values = [
+      nama,
+      npm,
+      namaKejuaraan,
+      prodi,
+      new Date(tanggalKejuaraan),
+      peringkat,
+      imageKejuaraan,
+      parseInt(id, 10),
+    ];
+
+    db.query(query, values, (err, results) => {
+      if (err) {
+        console.log(err);
+        return res
+          .status(500)
+          .json({ error: "Terjadi kesalahan saat memperbarui prestasi" });
+      }
+      if (results.affectedRows === 0) {
+        return res.status(404).json({ error: "Prestasi tidak ditemukan" });
+      }
+      res
+        .status(200)
+        .json({ message: "Prestasi berhasil diperbarui", data: req.body });
     });
-    res
-      .status(200)
-      .json({ message: "Prestasi berhasil diperbarui", data: updatedPrestasi });
   } catch (error) {
     console.log(error);
     res
@@ -107,10 +179,22 @@ const updatePrestasi = async (req, res) => {
 const deletePrestasi = async (req, res) => {
   const { id } = req.params;
   try {
-    await db.prestasi.delete({
-      where: { id: parseInt(id, 10) },
-    });
-    res.status(204).send(); // 204: No Content, berarti berhasil tanpa konten tambahan
+    db.query(
+      "DELETE FROM prestasi WHERE id = ?",
+      [parseInt(id, 10)],
+      (err, results) => {
+        if (err) {
+          console.log(err);
+          return res
+            .status(500)
+            .json({ error: "Terjadi kesalahan saat menghapus prestasi" });
+        }
+        if (results.affectedRows === 0) {
+          return res.status(404).json({ error: "Prestasi tidak ditemukan" });
+        }
+        res.status(204).send(); // 204: No Content, berarti berhasil tanpa konten tambahan
+      }
+    );
   } catch (error) {
     console.log(error);
     res
@@ -119,9 +203,9 @@ const deletePrestasi = async (req, res) => {
   }
 };
 
-export {
-  createPrestasi,
+module.exports = {
   getAllPrestasi,
+  createPrestasi,
   getPrestasiById,
   updatePrestasi,
   deletePrestasi,

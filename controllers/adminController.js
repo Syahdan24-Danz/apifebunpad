@@ -1,85 +1,171 @@
-import db from "../connection.js";
-import response from "../response.js";
+const db = require("../connection");
+const response = require("../response");
 
 // Get all Admins
-const getAllAdmins = async (req, res, next) => {
+const getAllAdmins = (req, res) => {
   try {
-    const adminList = await db.admin.findMany();
-    response(200, adminList, "Data Success", res);
-  } catch (error) {
-    next(error); // Pass error to middleware
+    db.query("SELECT * FROM admins", (err, results) => {
+      if (err) {
+        console.error(err);
+        return response(
+          500,
+          {},
+          "Terjadi kesalahan saat mengambil data admin",
+          res
+        );
+      }
+      response(200, results, "Data berhasil diambil", res);
+    });
+  } catch (err) {
+    console.error(err);
+    response(500, {}, "Terjadi kesalahan pada server", res);
   }
 };
 
 // Get Admin by ID
-const getAdminById = async (req, res, next) => {
+const getAdminById = (req, res) => {
   const { id } = req.params;
   try {
-    const admin = await db.admin.findUnique({
-      where: { id: parseInt(id) },
+    db.query("SELECT * FROM admins WHERE id = ?", [id], (err, results) => {
+      if (err) {
+        console.error(err);
+        return response(
+          500,
+          {},
+          "Terjadi kesalahan saat mengambil data admin",
+          res
+        );
+      }
+
+      if (results.length === 0) {
+        return response(404, {}, "Admin tidak ditemukan", res);
+      }
+
+      response(200, results[0], "Data berhasil diambil", res);
     });
-    if (!admin) {
-      return response(404, {}, "Data not found", res);
-    }
-    response(200, admin, "Data Success", res);
-  } catch (error) {
-    next(error); // Pass error to middleware
+  } catch (err) {
+    console.error(err);
+    response(500, {}, "Terjadi kesalahan pada server", res);
   }
 };
 
-// Create new Admin
-const createAdmin = async (req, res, next) => {
+// Create a new Admin
+const createAdmin = (req, res) => {
   const { name, email, password, role, managedById } = req.body;
   try {
-    // TODO: Hash the password before saving
-    const newAdmin = await db.admin.create({
-      data: {
-        name,
-        email,
-        password, // Ensure to hash the password
-        role,
-        managedById: managedById ? parseInt(managedById) : null,
-      },
-    });
-    response(201, newAdmin, "Data Success", res);
-  } catch (error) {
-    next(error); // Pass error to middleware
+    db.query(
+      "INSERT INTO admins (name, email, password, role, managed_by_id) VALUES (?, ?, ?, ?, ?)",
+      [name, email, password, role, managedById ? parseInt(managedById) : null],
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          return response(500, {}, "Terjadi kesalahan saat membuat admin", res);
+        }
+
+        const newAdminId = result.insertId;
+        db.query(
+          "SELECT * FROM admins WHERE id = ?",
+          [newAdminId],
+          (err, results) => {
+            if (err) {
+              console.error(err);
+              return response(
+                500,
+                {},
+                "Terjadi kesalahan saat mengambil admin baru",
+                res
+              );
+            }
+
+            response(201, results[0], "Admin berhasil dibuat", res);
+          }
+        );
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    response(500, {}, "Terjadi kesalahan pada server", res);
   }
 };
 
 // Update existing Admin
-const updateAdmin = async (req, res, next) => {
+const updateAdmin = (req, res) => {
   const { id } = req.params;
   const { name, email, password, role, managedById } = req.body;
   try {
-    // TODO: Hash the password if being updated
-    const updatedAdmin = await db.admin.update({
-      where: { id: parseInt(id) },
-      data: {
+    db.query(
+      "UPDATE admins SET name = ?, email = ?, password = ?, role = ?, managed_by_id = ? WHERE id = ?",
+      [
         name,
         email,
-        password, // Ensure to hash the password if updated
+        password,
         role,
-        managedById: managedById ? parseInt(managedById) : null,
-      },
-    });
-    response(200, updatedAdmin, "Data Success", res);
-  } catch (error) {
-    next(error); // Pass error to middleware
+        managedById ? parseInt(managedById) : null,
+        id,
+      ],
+      (err, result) => {
+        if (err) {
+          console.error(err);
+          return response(
+            500,
+            {},
+            "Terjadi kesalahan saat memperbarui admin",
+            res
+          );
+        }
+
+        if (result.affectedRows === 0) {
+          return response(404, {}, "Admin tidak ditemukan", res);
+        }
+
+        db.query("SELECT * FROM admins WHERE id = ?", [id], (err, results) => {
+          if (err) {
+            console.error(err);
+            return response(
+              500,
+              {},
+              "Terjadi kesalahan saat mengambil data admin",
+              res
+            );
+          }
+
+          response(200, results[0], "Admin berhasil diperbarui", res);
+        });
+      }
+    );
+  } catch (err) {
+    console.error(err);
+    response(500, {}, "Terjadi kesalahan pada server", res);
   }
 };
 
 // Delete Admin
-const deleteAdmin = async (req, res, next) => {
+const deleteAdmin = (req, res) => {
   const { id } = req.params;
   try {
-    await db.admin.delete({
-      where: { id: parseInt(id) },
+    db.query("DELETE FROM admins WHERE id = ?", [id], (err, result) => {
+      if (err) {
+        console.error(err);
+        return response(500, {}, "Terjadi kesalahan saat menghapus admin", res);
+      }
+
+      if (result.affectedRows === 0) {
+        return response(404, {}, "Admin tidak ditemukan", res);
+      }
+
+      // Berhasil menghapus, kirim 204 No Content
+      res.status(204).send();
     });
-    res.status(204).send(); // No content to return
-  } catch (error) {
-    next(error); // Pass error to middleware
+  } catch (err) {
+    console.error(err);
+    response(500, {}, "Terjadi kesalahan pada server", res);
   }
 };
 
-export { getAllAdmins, getAdminById, createAdmin, updateAdmin, deleteAdmin };
+module.exports = {
+  getAllAdmins,
+  getAdminById,
+  createAdmin,
+  updateAdmin,
+  deleteAdmin,
+};

@@ -1,30 +1,37 @@
-import express from "express";
-import response from "./response.js";
-import cors from "cors";
-import { PrismaClient } from "@prisma/client";
-import router from "./routes/index.js";
-import dotenv from "dotenv";
+const express = require("express");
+const db = require("./connection.js");
+const response = require("./response.js");
+const cors = require("cors");
+const router = require("./routes/index.js");
+const dotenv = require("dotenv");
+const validateApiKey = require("./middlewares/validateApiKey.js");
+const path = require("path");
+dotenv.config(); // Load environment variables from .env file
 
-dotenv.config();
-const prisma = new PrismaClient();
+const apiKey = process.env.API_KEY;
+
 const app = express();
 const port = process.env.PORT || 3000;
 
-app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Middleware setup
+app.use(cors()); // Enable CORS for all routes
+app.use(express.json()); // Parse JSON request bodies
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 
+// Root route
 app.get("/", (req, res) => {
-  response(200, "", "Welcome to api bem feb unpad", res);
+  response(200, "", "Welcome to API BEM FEB Unpad", res);
 });
-
+app.use("/api", validateApiKey);
 app.use("/api", router);
+app.use("/uploads", express.static(path.join(__dirname, "public/uploads")));
 
 app.use((err, req, res, next) => {
-  console.error("Unhandled Error:", err);
+  console.error(err.stack);
   response(500, "", "Server Error", res);
 });
 
+// Start server
 app.listen(port, () => {
-  console.log(`Server berjalan di http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });

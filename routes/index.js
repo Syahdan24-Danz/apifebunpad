@@ -1,34 +1,35 @@
-import express from "express";
-import { login } from "../controllers/loginController.js"; // Mengimpor controller login
-import { validateLogin } from "../utils/validators/auth.js"; // Middleware validasi login
+const express = require("express");
+const { login } = require("../controllers/loginController.js"); // Mengimpor controller login
+const { validateLogin } = require("../utils/validators/auth.js"); // Middleware validasi login
 
-import {
+const {
   createPrestasi,
   getAllPrestasi,
   getPrestasiById,
   updatePrestasi,
   deletePrestasi,
-} from "../controllers/prestasiController.js"; // Pastikan ekstensi .js ditambahkan
+} = require("../controllers/prestasiController.js"); // Pastikan ekstensi .js ditambahkan
 
-import {
+const {
   getAllLembaga,
   getLembagaById,
   createLembaga,
   updateLembaga,
   deleteLembaga,
-} from "../controllers/lkController.js"; // Pastikan ekstensi .js ditambahkan
+} = require("../controllers/lkController.js"); // Pastikan ekstensi .js ditambahkan
 
-import {
+const {
   getAllAdmins,
   getAdminById,
   createAdmin,
   updateAdmin,
   deleteAdmin,
-} from "../controllers/adminController.js"; // Pastikan ekstensi .js ditambahkan
+} = require("../controllers/adminController.js"); // Pastikan ekstensi .js ditambahkan
+
+const { getAllBso } = require("../controllers/bsoController.js");
 
 const router = express.Router();
 
-// Route untuk login
 router.post("/login", validateLogin, login);
 
 router.get("/prestasi", getAllPrestasi);
@@ -51,4 +52,6 @@ router.post("/admins", createAdmin); // Buat admin baru
 router.put("/admins/:id", updateAdmin); // Update admin berdasarkan ID
 router.delete("/admins/:id", deleteAdmin); // Hapus admin berdasarkan ID
 
-export default router;
+router.get("/bso", getAllBso);
+
+module.exports = router;

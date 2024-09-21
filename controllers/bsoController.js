@@ -2,9 +2,8 @@ const db = require("../connection"); // Koneksi database
 const response = require("../response"); // Modul response untuk menangani hasil response
 
 // Get All Lembaga Mahasiswa
-const getAllLembaga = (req, res) => {
-  const query = "SELECT * FROM lembaga_mahasiswa";
-
+const getAllBso = (req, res) => {
+  const query = "SELECT * FROM badan_organisasi";
   db.query(query, (err, results) => {
     if (err) {
       console.error(err);
@@ -20,7 +19,7 @@ const getAllLembaga = (req, res) => {
 };
 
 // Get Lembaga by ID
-const getLembagaById = (req, res) => {
+const getBsoById = (req, res) => {
   const { id } = req.params;
   const query = "SELECT * FROM lembaga_mahasiswa WHERE id = ?";
 
@@ -42,7 +41,7 @@ const getLembagaById = (req, res) => {
 };
 
 // Create New Lembaga Mahasiswa
-const createLembaga = (req, res) => {
+const createBso = (req, res) => {
   const { title, description, image, bookletLink, pageLink } = req.body;
 
   const query = `
@@ -79,7 +78,7 @@ const createLembaga = (req, res) => {
 };
 
 // Update Lembaga Mahasiswa
-const updateLembaga = (req, res) => {
+const updateBso = (req, res) => {
   const { id } = req.params;
   const { title, description, image, bookletLink, pageLink } = req.body;
 
@@ -127,7 +126,7 @@ const updateLembaga = (req, res) => {
 };
 
 // Delete Lembaga Mahasiswa
-const deleteLembaga = (req, res) => {
+const deleteBso = (req, res) => {
   const { id } = req.params;
   const query = "DELETE FROM lembaga_mahasiswa WHERE id = ?";
 
@@ -148,9 +147,9 @@ const deleteLembaga = (req, res) => {
 
 // Ekspor semua fungsi CRUD
 module.exports = {
-  getAllLembaga,
-  getLembagaById,
-  createLembaga,
-  updateLembaga,
-  deleteLembaga,
+  getAllBso,
+  getBsoById,
+  createBso,
+  updateBso,
+  deleteBso,
 };

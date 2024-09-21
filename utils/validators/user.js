@@ -1,6 +1,5 @@
-import body from "express-validator";
-import { PrismaClient } from "@prisma/client";
-const prisma = new PrismaClient();
+const { body } = require("express-validator");
+const db = require("../connection.js");
 
 const validateUser = [
   body("name").notEmpty().withMessage("Name is required"),
@@ -13,7 +12,7 @@ const validateUser = [
       if (!value) {
         throw new Error("Email is required");
       }
-      const admin = await prisma.admin.findUnique({ where: { email: value } });
+      const admin = await db.admin.findUnique({ where: { email: value } });
       if (admin && admin.id !== Number(req.params.id)) {
         throw new Error("Email already exists");
       }
@@ -24,4 +23,4 @@ const validateUser = [
     .withMessage("Password must be at least 6 characters long"),
 ];
 
-export { validateUser };
+module.exports = { validateUser };

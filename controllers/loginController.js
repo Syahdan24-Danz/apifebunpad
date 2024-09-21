@@ -1,87 +1,76 @@
-import bcrypt from "bcryptjs";
-import jwt from "jsonwebtoken";
-import { validationResult } from "express-validator";
-import { PrismaClient } from "@prisma/client";
+const bcrypt = require("bcrypt");
+const db = require("../connection.js");
+const jwt = require("jsonwebtoken");
+const { validationResult } = require("express-validator");
+const response = require("../response");
 
-// Inisialisasi Prisma Client
-const prisma = new PrismaClient();
-
-const login = async (req, res) => {
-  // Periksa hasil validasi
+const login = (req, res, next) => {
+  // Validasi input dari request
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
-    return res.status(422).json({
-      success: false,
-      message: "Validation error",
-      errors: errors.array(),
-    });
+    return response(422, { errors: errors.array() }, "Validation error", res);
   }
+
+  const { email, password } = req.body;
 
   try {
     // Mencari admin berdasarkan email
-    const admin = await prisma.admin.findFirst({
-      where: {
-        email: req.body.email,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        password: true, // Pastikan password hash diambil
-      },
-    });
+    db.query(
+      "SELECT id, name, email, password FROM admins WHERE email = ?",
+      [email],
+      async (err, results) => {
+        if (err) {
+          console.error("Database query error:", err);
+          return response(
+            500,
+            {},
+            "Terjadi kesalahan saat mengambil data",
+            res
+          );
+        }
 
-    // Jika admin tidak ditemukan
-    if (!admin) {
-      return res.status(404).json({
-        success: false,
-        message: "Admin not found",
-      });
-    }
+        const admin = results[0];
 
-    // Debugging: Print hashed password dan input password
-    console.log("Password input:", req.body.password);
-    console.log("Password hash:", admin.password);
+        // Jika admin tidak ditemukan
+        if (!admin) {
+          return response(404, {}, "Admin tidak ditemukan", res);
+        }
 
-    // Membandingkan password
-    const validPassword = await bcrypt.compare(
-      req.body.password,
-      admin.password
+        // Debugging: Hapus atau komentari baris berikut di produksi
+        console.log("Password input:", password);
+        console.log("Password hash:", admin.password);
+
+        // Membandingkan password
+        const validPassword = await bcrypt.compare(password, admin.password);
+
+        if (!validPassword) {
+          return response(401, {}, "Password salah", res);
+        }
+
+        // Generate token JWT
+        const token = jwt.sign({ id: admin.id }, process.env.JWT_SECRET, {
+          expiresIn: "1h",
+        });
+
+        // Menghilangkan password dari objek admin sebelum dikirim
+        const { password: _, ...adminWithoutPassword } = admin;
+
+        // Mengirimkan response sukses dengan token JWT
+        response(
+          200,
+          { admin: adminWithoutPassword, token },
+          "Login berhasil",
+          res
+        );
+      }
     );
-
-    if (!validPassword) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid password",
-      });
-    }
-
-    // Generate token JWT
-    const token = jwt.sign({ id: admin.id }, process.env.JWT_SECRET, {
-      expiresIn: "1h",
-    });
-
-    // Menghilangkan password dari objek admin sebelum dikirim
-    const { password, ...adminWithoutPassword } = admin;
-
-    // Mengirimkan response sukses dengan token JWT
-    res.status(200).json({
-      success: true,
-      message: "Login successfully",
-      data: {
-        admin: adminWithoutPassword,
-        token: token,
-      },
-    });
   } catch (error) {
     // Log error lebih detail
     console.error("Login error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    // Pass error ke middleware error handling
+    next(error);
   }
 };
 
 // Menggunakan export ES6
-export { login };
+module.exports = { login };
