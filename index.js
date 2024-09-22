@@ -6,20 +6,17 @@ const router = require("./routes/index.js");
 const dotenv = require("dotenv");
 const validateApiKey = require("./middlewares/validateApiKey.js");
 const path = require("path");
-dotenv.config(); // Load environment variables from .env file
-
-const apiKey = process.env.API_KEY;
+dotenv.config();
 
 const app = express();
 const port = process.env.PORT || 3005;
 
-
-app.use(cors()); 
+app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); 
+app.use(express.urlencoded({ extended: true }));
 
 // Root route
-app.get("/", (req, res) => {a
+app.get("/", (req, res) => {
   response(200, "", "Welcome to API BEM FEB Unpad", res);
 });
 app.use("/api", validateApiKey);

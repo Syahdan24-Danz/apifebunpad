@@ -8,7 +8,7 @@
   },
   "author": "Syahdan Firmansyah",
   "license": "ISC",
-  "description": "",
+  "description": "��#\u0000 \u0000a\u0000p\u0000i\u0000f\u0000e\u0000b\u0000u\u0000n\u0000p\u0000a\u0000d\u0000\r\u0000 \u0000\r\u0000 \u0000",
   "dependencies": {
     "axios": "^1.7.7",
     "bcrypt": "^5.1.1",
@@ -21,5 +21,6 @@
     "jsonwebtoken": "^9.0.2",
     "multer": "^1.4.5-lts.1",
     "mysql": "^2.18.1"
-  }
+  },
+  "devDependencies": {}
 }

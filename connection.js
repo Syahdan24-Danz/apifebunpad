@@ -1,10 +1,10 @@
 const mysql = require("mysql");
 
 const db = mysql.createConnection({
-  host: "api.bemfebunpad.my.id", // Sesuaikan dengan host database Anda
-  user: "bemfebun_admin", // Sesuaikan dengan user database Anda
-  password: "Cc,yzEXQenK9", // Sesuaikan dengan password database Anda
-  database: "bemfebun_db_bemfeb", // Nama database yang akan Anda gunakan
+  host: "api.bemfebunpad.my.id",
+  user: "bemfebun_admin",
+  password: "Cc,yzEXQenK9",
+  database: "bemfebun_db_bemfeb",
 });
 
 // const db = mysql.createConnection({

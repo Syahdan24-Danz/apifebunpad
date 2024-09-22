@@ -1,6 +1,6 @@
 const express = require("express");
-const { login } = require("../controllers/loginController.js"); // Mengimpor controller login
-const { validateLogin } = require("../utils/validators/auth.js"); // Middleware validasi login
+const { login } = require("../controllers/loginController.js");
+const { validateLogin } = require("../utils/validators/auth.js");
 
 const {
   createPrestasi,
@@ -8,7 +8,7 @@ const {
   getPrestasiById,
   updatePrestasi,
   deletePrestasi,
-} = require("../controllers/prestasiController.js"); // Pastikan ekstensi .js ditambahkan
+} = require("../controllers/prestasiController.js");
 
 const {
   getAllLembaga,
@@ -16,7 +16,7 @@ const {
   createLembaga,
   updateLembaga,
   deleteLembaga,
-} = require("../controllers/lkController.js"); // Pastikan ekstensi .js ditambahkan
+} = require("../controllers/lkController.js");
 
 const {
   getAllAdmins,
@@ -24,7 +24,7 @@ const {
   createAdmin,
   updateAdmin,
   deleteAdmin,
-} = require("../controllers/adminController.js"); // Pastikan ekstensi .js ditambahkan
+} = require("../controllers/adminController.js");
 
 const { getAllBso } = require("../controllers/bsoController.js");
 
@@ -34,23 +34,21 @@ router.post("/login", validateLogin, login);
 
 router.get("/prestasi", getAllPrestasi);
 router.post("/prestasi", createPrestasi);
-router.get("/prestasi/:id", getPrestasiById); // Ambil satu prestasi berdasarkan ID
-router.put("/prestasi/:id", updatePrestasi); // Update prestasi berdasarkan ID
-router.delete("/prestasi/:id", deletePrestasi); // Hapus prestasi berdasarkan ID
+router.get("/prestasi/:id", getPrestasiById);
+router.put("/prestasi/:id", updatePrestasi);
+router.delete("/prestasi/:id", deletePrestasi);
 
-// Route untuk Lembaga
-router.get("/lembaga", getAllLembaga); // Ambil semua data lembaga
-router.get("/lembaga/:id", getLembagaById); // Ambil satu lembaga berdasarkan ID
-router.post("/lembaga", createLembaga); // Buat lembaga baru
-router.put("/lembaga/:id", updateLembaga); // Update lembaga berdasarkan ID
-router.delete("/lembaga/:id", deleteLembaga); // Hapus lembaga berdasarkan ID
+router.get("/lembaga", getAllLembaga);
+router.get("/lembaga/:id", getLembagaById);
+router.post("/lembaga", createLembaga);
+router.put("/lembaga/:id", updateLembaga);
+router.delete("/lembaga/:id", deleteLembaga);
 
-// Route untuk Admins
-router.get("/admins", getAllAdmins); // Ambil semua admin
-router.get("/admins/:id", getAdminById); // Ambil admin berdasarkan ID
-router.post("/admins", createAdmin); // Buat admin baru
-router.put("/admins/:id", updateAdmin); // Update admin berdasarkan ID
-router.delete("/admins/:id", deleteAdmin); // Hapus admin berdasarkan ID
+router.get("/admins", getAllAdmins);
+router.get("/admins/:id", getAdminById);
+router.post("/admins", createAdmin);
+router.put("/admins/:id", updateAdmin);
+router.delete("/admins/:id", deleteAdmin);
 
 router.get("/bso", getAllBso);
 
