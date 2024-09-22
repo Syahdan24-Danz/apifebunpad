@@ -1,21 +1,15 @@
-// middlewares/validateApiKey.js
-const dotenv = require("dotenv");
-dotenv.config(); // Load environment variables
-
-const apiKey = process.env.API_KEY; // Load API key from environment variables
-
 const validateApiKey = (req, res, next) => {
-  const requestKey = req.headers["x-api-key"]; // Get API key from request header
+  const requestKey = req.headers["x-api-key"];
+  console.log("API Key from .env:", apiKey); // Logging env API Key
+  console.log("Request API Key from Header:", requestKey); // Logging request API Key
 
   if (!requestKey) {
-    return res.status(401).json({ message: "API Key is missing" }); // If no API key, return error
+    return response(400, {}, "Missing API Key", res);
   }
 
   if (requestKey !== apiKey) {
-    return res.status(403).json({ message: "Invalid API Key" }); // If API key does not match, return error
+    return response(401, {}, "Invalid API Key", res);
   }
 
-  next(); // If valid, proceed to next middleware or route handler
+  next();
 };
-
-module.exports = validateApiKey;
